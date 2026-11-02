@@ -54,6 +54,8 @@ struct SettingsView: View {
         }
         .padding()
         .frame(minWidth: 440, minHeight: 300)
+        // Covers a newly created window, which doesn't exist yet when the menu action runs.
+        .onAppear { SettingsWindow.bringToFront() }
         // Picks up browsers installed or removed since the window was last used.
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
             browsers = Browser.installed()

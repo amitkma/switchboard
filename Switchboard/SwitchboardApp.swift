@@ -11,7 +11,7 @@ import SwiftUI
         // Without the last three modifiers, SwiftUI opens this window at launch or whenever
         // a link arrives. It should only open from the menu, or once on first launch so a
         // new user sees something and can make the app their default browser.
-        Window("Switchboard Settings", id: "settings") {
+        Window(SettingsWindow.title, id: "settings") {
             SettingsView(store: appDelegate.store, defaultBrowser: appDelegate.defaultBrowser)
         }
         .defaultSize(width: 480, height: 400)
@@ -28,13 +28,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let defaultBrowser = DefaultBrowserStatus()
     private lazy var router = LinkRouter(store: store)
 
-    func applicationDidFinishLaunching(_ notification: Notification) {
-        // A menu bar app isn't active by default, so without this the window opens behind others.
-        if defaultBrowser.shouldPromptAtLaunch { NSApp.activate() }
-    }
-
     func application(_ application: NSApplication, open urls: [URL]) {
         urls.forEach(router.open)
+    }
+}
+
+enum SettingsWindow {
+    static let title = "Switchboard Settings"
+
+    /// A menu bar app isn't active by default, and activate() is only a request that macOS can
+    /// ignore. So also order the window front directly, and bring it to the current Space.
+    static func bringToFront() {
+        NSApp.activate()
+        guard let window = NSApp.windows.first(where: { $0.title == title }) else { return }
+        window.collectionBehavior.insert(.moveToActiveSpace)
+        window.makeKeyAndOrderFront(nil)
+        window.orderFrontRegardless()
     }
 }
 
@@ -58,8 +67,8 @@ private struct MenuContent: View {
     }
 
     private func openSettings() {
-        // A menu bar app isn't active by default, so without this the window opens behind others.
-        NSApp.activate()
         openWindow(id: "settings")
+        // openWindow does nothing to a window that's already open but hidden behind others.
+        SettingsWindow.bringToFront()
     }
 }

@@ -53,7 +53,7 @@ Launch Services doesn't list copies built under `/tmp` as candidate browsers, so
 
 ## Constraints
 
-- **Platform:** macOS only, with a deployment target of 15.0, so check API availability against macOS 15. `LSUIElement` is on, so there is no Dock icon, and code that shows a window or alert must call `NSApp.activate()` first.
+- **Platform:** macOS only, with a deployment target of 15.0, so check API availability against macOS 15. `LSUIElement` is on, so there is no Dock icon, and code that shows a window or alert must call `NSApp.activate()` first. That call is only a request, so the settings window also orders itself front through `SettingsWindow.bringToFront()`.
 - **Bundle ID:** the default-browser choice and saved settings are tied to `io.github.amitkma.switchboard`, so changing it makes users select the app again and loses their settings.
 - **Concurrency:** `SWIFT_DEFAULT_ACTOR_ISOLATION` is `MainActor`, so types and functions are main-actor isolated unless marked otherwise. Use `nonisolated` or an explicit actor for background work. `SWIFT_APPROACHABLE_CONCURRENCY` is also on, with `SWIFT_VERSION` 5.0. The test target doesn't set the default, so test suites need `@MainActor`.
 - **Imports:** `SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY` is on, so each file must import the module whose members it uses.
