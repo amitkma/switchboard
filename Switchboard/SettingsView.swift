@@ -2,6 +2,7 @@ import SwiftUI
 
 struct SettingsView: View {
     @Bindable var store: RouterStore
+    let defaultBrowser: DefaultBrowserStatus
     @State private var browsers = Browser.installed()
     @State private var draggedRule: UUID?
     @State private var dragOffset: CGFloat = 0
@@ -11,6 +12,10 @@ struct SettingsView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
+            if !defaultBrowser.isDefault {
+                DefaultBrowserBanner(status: defaultBrowser)
+            }
+
             BrowserPicker(title: "Fallback browser:", selection: $store.fallback, browsers: browsers)
 
             // Not a List: tables wait about a second before a click starts editing a text field.
@@ -77,6 +82,37 @@ struct SettingsView: View {
               store.rules.indices.contains(index + steps) else { return false }
         store.rules.swapAt(index, index + steps)
         return true
+    }
+}
+
+/// Explains why links aren't arriving and offers the fix. Hidden once the app is the default.
+private struct DefaultBrowserBanner: View {
+    let status: DefaultBrowserStatus
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text("Switchboard isn’t your default browser, so it can’t route your links yet.")
+                    .fixedSize(horizontal: false, vertical: true)
+                Spacer()
+                Button("Set as Default") {
+                    Task { await status.requestDefault() }
+                }
+                .buttonStyle(.borderedProminent)
+            }
+            if status.requestDidNotChange {
+                HStack {
+                    Text("Your default browser didn’t change. You can also choose Switchboard in System Settings.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Spacer()
+                    Button("Open System Settings", action: status.openSystemSettings)
+                }
+            }
+        }
+        .padding(10)
+        .background(.quaternary, in: .rect(cornerRadius: 8))
     }
 }
 

@@ -41,9 +41,13 @@ To install it permanently, choose **Product → Show Build Folder in Finder**, d
 
 ## Set it as your default browser
 
-1. Open **System Settings → Desktop & Dock → Default web browser**. If it isn't there, search System Settings for "default web browser".
-2. Choose **Switchboard**.
-3. Click the menu bar icon and choose **Settings…** to edit your rules.
+The first time you open Switchboard, its settings window explains this step.
+
+1. Click **Set as Default**. You can also find **Set as Default Browser…** in the menu bar menu.
+2. Confirm the change when macOS asks. macOS doesn't let an app take this role without asking you.
+3. Edit your rules in the settings window. To reopen it later, click the menu bar icon and choose **Settings…**.
+
+To change it by hand, or to switch back, open **System Settings → Desktop & Dock → Default web browser**. If it isn't there, search System Settings for "default web browser".
 
 ## Good to know
 

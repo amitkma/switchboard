@@ -9,11 +9,14 @@ Switchboard is a macOS menu bar app that acts as the default browser and sends e
 - `Switchboard/SwitchboardApp.swift`: scenes and `AppDelegate`. All links arrive through `application(_:open:)`, on launch and while running.
 - `Switchboard/RoutingRules.swift`: `Browser`, `Rule` and `DomainMatcher`. This has no UI or AppKit dependency.
 - `Switchboard/LinkRouter.swift`: browser discovery, `RouterStore` (settings in UserDefaults) and `LinkRouter` (opens links through `NSWorkspace`, shows the missing-browser alert).
+- `Switchboard/DefaultBrowser.swift`: `DefaultBrowserStatus`, which checks and requests the default-browser role.
 - `Switchboard/SettingsView.swift`: the settings window.
 - `SwitchboardTests/`: Swift Testing tests for `DomainMatcher`.
 - `Info.plist` (project root): declares the http/https URL types and the `public.html` document type, merged into the generated plist. Keep it outside `Switchboard/` so it isn't also copied in as a resource.
 
 The settings `Window` scene must keep `.handlesExternalEvents(matching: [])`. Without it, SwiftUI opens the window whenever a link arrives.
+
+The settings window opens by itself only once, on the first launch that finds another default browser. Running the tests launches the app as their host, which uses up that first launch. To see it again, run `defaults delete ~/Library/Containers/io.github.amitkma.switchboard/Data/Library/Preferences/io.github.amitkma.switchboard defaultBrowserPromptShown`.
 
 The rules list is a `ScrollView`, not a `List`. In a `List`, clicking a domain field took about 1.1 seconds to start editing, likely from the table class behind it. `.onMove` needs a `List`, so reordering is a `DragGesture` on the row handle. Synthetic `NSEvent`s don't trigger `DragGesture`, so test dragging by hand.
 
