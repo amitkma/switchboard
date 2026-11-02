@@ -1,0 +1,27 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    # The project needs Xcode 27. This runner image is a GitHub public preview, so
+    # switch to macos-latest once that label includes Xcode 27.
+    runs-on: xcode-27
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Show Xcode version
+        run: xcodebuild -version
+
+      - name: Run tests
+        run: xcodebuild -project Switchboard.xcodeproj -scheme Switchboard -destination 'platform=macOS,arch=arm64' test
+
+      - name: Build for release
+        run: xcodebuild -project Switchboard.xcodeproj -scheme Switchboard -configuration Release -destination 'generic/platform=macOS' build

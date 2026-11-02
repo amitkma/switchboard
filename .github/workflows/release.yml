@@ -1,0 +1,59 @@
+name: Release
+
+# Runs only when a version tag is pushed, for example: git tag v1.0.0 && git push origin v1.0.0
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    # The project needs Xcode 27. This runner image is a GitHub public preview, so
+    # switch to macos-latest once that label includes Xcode 27.
+    runs-on: xcode-27
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Run tests
+        run: xcodebuild -project Switchboard.xcodeproj -scheme Switchboard -destination 'platform=macOS,arch=arm64' -derivedDataPath build test
+
+      # With no team set, Xcode signs the app ad hoc. It is not notarized.
+      - name: Build universal app
+        run: >
+          xcodebuild -project Switchboard.xcodeproj -scheme Switchboard
+          -configuration Release -destination 'generic/platform=macOS' -derivedDataPath build
+          MARKETING_VERSION="${GITHUB_REF_NAME#v}" CURRENT_PROJECT_VERSION="$GITHUB_RUN_NUMBER"
+          build
+
+      - name: Check the app
+        run: |
+          app=build/Build/Products/Release/Switchboard.app
+          codesign --verify --deep --strict "$app"
+          lipo -archs "$app/Contents/MacOS/Switchboard" | grep -q arm64
+          lipo -archs "$app/Contents/MacOS/Switchboard" | grep -q x86_64
+          entitlements=$(codesign -d --entitlements - "$app" 2>&1)
+          grep -q com.apple.security.app-sandbox <<< "$entitlements"
+          if grep -q get-task-allow <<< "$entitlements"; then
+            echo "The release build has the get-task-allow debug entitlement."
+            exit 1
+          fi
+
+      # ditto keeps the app's signature and symlinks intact, which plain zip can break.
+      - name: Package
+        run: |
+          mkdir dist
+          ditto -c -k --keepParent build/Build/Products/Release/Switchboard.app "dist/Switchboard-${GITHUB_REF_NAME#v}.zip"
+          cd dist
+          shasum -a 256 ./*.zip > SHA256SUMS.txt
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >
+          gh release create "$GITHUB_REF_NAME" dist/*
+          --verify-tag --generate-notes --title "Switchboard ${GITHUB_REF_NAME#v}"
+          --notes "This build is not notarized, so macOS blocks it the first time. See [Download](https://github.com/amitkma/switchboard#download) for how to open it."
